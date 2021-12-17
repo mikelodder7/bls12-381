@@ -3,10 +3,22 @@ package bls12381
 import (
 	"crypto/sha256"
 	"errors"
+	"golang.org/x/crypto/sha3"
 )
 
-func hashToFpXMDSHA256(msg []byte, domain []byte, count int) ([]*fe, error) {
-	randBytes, err := expandMsgSHA256XMD(msg, domain, count*64)
+func HashToFpXMDSHA256(msg, domain []byte, count int) ([]*fe, error) {
+	return hashToFp(expandMsgSHA256XMD, msg, domain, count)
+}
+
+func HashToFpXOFSHAKE256(msg, domain []byte, count int) ([]*fe, error) {
+	return hashToFp(expandMsgSHAKE256XOF, msg, domain, count)
+}
+
+func hashToFp(
+	f func([]byte, []byte, int) ([]byte, error),
+	msg, domain []byte, count int,
+	) ([]*fe, error) {
+	randBytes, err := f(msg, domain, count*64)
 	if err != nil {
 		return nil, err
 	}
@@ -18,6 +30,21 @@ func hashToFpXMDSHA256(msg []byte, domain []byte, count int) ([]*fe, error) {
 		}
 	}
 	return els, nil
+}
+
+func expandMsgSHAKE256XOF(msg, domain []byte, outLen int) ([]byte, error) {
+	h := sha3.NewShake256()
+	domainLen := uint8(len(domain))
+	if domainLen > 255 {
+		return nil, errors.New("invalid domain length")
+	}
+	_, _ = h.Write(msg)
+	_, _ = h.Write([]byte{uint8(outLen >> 8), uint8(outLen)})
+	_, _ = h.Write(domain)
+	_, _ = h.Write([]byte{domainLen})
+	okm := make([]byte, outLen)
+	_, _ = h.Read(okm)
+	return okm, nil
 }
 
 func expandMsgSHA256XMD(msg []byte, domain []byte, outLen int) ([]byte, error) {
