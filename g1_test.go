@@ -590,7 +590,7 @@ func TestG1HashToCurve(t *testing.T) {
 		},
 	} {
 		g := NewG1()
-		p0, err := g.HashToCurve(v.msg, domain)
+		p0, err := g.HashToCurve(HashToFpXMDSHA256, v.msg, domain)
 		if err != nil {
 			t.Fatal("hash to point fails", i, err)
 		}

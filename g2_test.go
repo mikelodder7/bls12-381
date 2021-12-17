@@ -628,7 +628,7 @@ func TestG2HashToCurve(t *testing.T) {
 		},
 	} {
 		g := NewG2()
-		p0, err := g.HashToCurve(v.msg, domain)
+		p0, err := g.HashToCurve(HashToFpXMDSHA256, v.msg, domain)
 		if err != nil {
 			t.Fatal("encode to point fails", i, err)
 		}
